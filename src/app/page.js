@@ -16,13 +16,13 @@ export default function QuotationPage() {
     const newEstimates = [];
     let total = 0;
 
-    // Base price based on website type
+    // Base price calculation
     if (data.websiteType === "Business Website") {
       newEstimates.push({ service: "Business Website", price: "₹3,000 - ₹5,000" });
-      total += 4000; // Average
+      total += 4000;
     } else if (data.websiteType === "E-Commerce Store") {
       newEstimates.push({ service: "E-Commerce Website", price: "₹7,000 - ₹15,000" });
-      total += 11000; // Average
+      total += 11000;
     } else if (data.websiteType === "Portfolio/Personal Website") {
       newEstimates.push({ service: "Portfolio Website", price: "₹2,500 - ₹4,000" });
       total += 3250;
@@ -38,40 +38,37 @@ export default function QuotationPage() {
     if (data.pageCount > 5) {
       const additionalPages = data.pageCount - 5;
       newEstimates.push({
-        service: `Additional Pages (${additionalPages})`,
+        service: `Extra Pages (${additionalPages})`,
         price: `₹${500 * additionalPages}`,
-        notes: "₹500 per page"
+        notes: "₹500/page"
       });
       total += 500 * additionalPages;
     }
 
-    // Features
-    if (features.includes("Online Store") && data.websiteType !== "E-Commerce Store") {
-      newEstimates.push({ service: "Online Store", price: "₹4,000 - ₹8,000" });
-      total += 6000;
-    }
-    if (features.includes("Blog Section") && data.websiteType !== "Blog/Content Site") {
-      newEstimates.push({ service: "Blog Section", price: "₹2,000 - ₹4,000" });
-      total += 3000;
-    }
-    if (features.includes("Booking System")) {
-      newEstimates.push({ service: "Booking System", price: "₹3,000 - ₹6,000" });
-      total += 4500;
-    }
-    if (features.includes("Gallery")) {
-      newEstimates.push({ service: "Photo Gallery", price: "₹1,500 - ₹3,000" });
-      total += 2250;
-    }
-    if (features.includes("Custom Design")) {
-      newEstimates.push({ service: "Custom Design", price: "₹2,000 - ₹5,000" });
-      total += 3500;
-    }
+    // Features pricing
+    const featurePrices = {
+      "Online Store": 6000,
+      "Blog Section": 3000,
+      "Booking System": 4500,
+      "Gallery": 2250,
+      "Custom Design": 3500
+    };
 
-    // Domain & Hosting (always included)
+    features.forEach(feature => {
+      if (featurePrices[feature]) {
+        newEstimates.push({ 
+          service: feature, 
+          price: `₹${featurePrices[feature].toLocaleString('en-IN')}` 
+        });
+        total += featurePrices[feature];
+      }
+    });
+
+    // Domain & Hosting
     newEstimates.push({
-      service: "Domain & Hosting (1st year)",
+      service: "Domain & Hosting",
       price: "₹2,000 - ₹3,000",
-      notes: "Renewal ₹2,000/year"
+      notes: "First year included"
     });
     total += 2500;
 
@@ -79,67 +76,68 @@ export default function QuotationPage() {
     setTotalEstimate(`₹${total.toLocaleString('en-IN')}`);
   };
 
-  const onSubmit = async (data) => {
-    calculateEstimate(data);
-    
-    try {
-      await fetch("https://formsubmit.co/ajax/abhishekbamane23@gmail.com", {
-        method: "POST",
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          ...data,
-          features: data.features?.join(', ') || 'None',
-          estimatedPrice: totalEstimate,
-          _subject: `New Quote Request from ${data.fullName}`
-        }),
-      });
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-    }
-  };
+const onSubmit = async (data) => {
+  // Ensure features is always an array before joining
+  const featuresString = Array.isArray(data.features) 
+    ? data.features.join(', ') 
+    : 'None';
+
+  calculateEstimate(data);
+  
+  try {
+    await fetch("https://formsubmit.co/ajax/abhishekbamane23@gmail.com", {
+      method: "POST",
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        ...data,
+        features: featuresString, // Use the safe version
+        estimatedPrice: totalEstimate,
+        _subject: `New Quote Request from ${data.fullName}`
+      }),
+    });
+    setIsSubmitted(true);
+  } catch (error) {
+    console.error('Error submitting form:', error);
+  }
+};
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-8">
+      <div className="min-h-screen bg-gray-50 py-8 px-4">
+        <div className="max-w-md mx-auto bg-white rounded-lg shadow-sm p-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Thank You!</h1>
-           <p className="text-lg text-gray-600 mb-6">
-  We&apos;ve received your request and will send your detailed quotation soon.
-</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Thank You!</h1>
+            <p className="text-base md:text-lg text-gray-600 mb-5">
+              We&apos;ve received your request and will contact you soon.
+            </p>
             
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Your Estimated Costs</h2>
+            <div className="mt-6">
+              <h2 className="text-lg md:text-xl font-semibold mb-3">Your Estimate</h2>
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="w-full border-collapse">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                      <th className="p-2 text-left text-xs sm:text-sm">Service</th>
+                      <th className="p-2 text-left text-xs sm:text-sm">Price</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody>
                     {estimates.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{item.service}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{item.price}</td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{item.notes || '-'}</td>
+                      <tr key={index} className="border-b border-gray-200">
+                        <td className="p-2 text-xs sm:text-sm">{item.service}</td>
+                        <td className="p-2 text-xs sm:text-sm">{item.price}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="mt-4 text-right">
-                <p className="text-lg font-semibold">Total Estimated Cost: {totalEstimate}</p>
+              <div className="mt-3 text-right">
+                <p className="text-sm sm:text-base font-semibold">Total: {totalEstimate}</p>
               </div>
             </div>
-            
-           <h1 className="text-4xl font-bold text-gray-900 mb-4">Get Your Website Quotation</h1>
           </div>
         </div>
       </div>
@@ -147,110 +145,90 @@ export default function QuotationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Get Your Website Quotation</h1>
-          <p className="text-xl text-gray-600">
-            Fill out the form below to receive a custom quote for your website project.
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            Get Your Website Quotation
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600">
+            Fill the form below for a custom quote
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="fullName"
-                  type="text"
-                  {...register("fullName", { required: "Full name is required" })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-                {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Form Section */}
+          <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 rounded-lg shadow-sm">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Form Fields */}
+              {[
+                { id: "fullName", label: "Full Name", type: "text", required: true },
+                { id: "email", label: "Email", type: "email", required: true },
+                { id: "phone", label: "Phone", type: "tel" },
+                { id: "businessName", label: "Business Name", type: "text" }
+              ].map((field) => (
+                <div key={field.id}>
+                  <label htmlFor={field.id} className="block text-sm font-medium text-gray-700">
+                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    id={field.id}
+                    type={field.type}
+                    {...register(field.id, { 
+                      required: field.required && `${field.label} is required`,
+                      ...(field.type === "email" && {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: "Invalid email"
+                        }
+                      })
+                    })}
+                    className="mt-1 w-full rounded border border-gray-300 p-2 text-sm focus:ring-1 focus:ring-indigo-500"
+                  />
+                  {errors[field.id] && (
+                    <p className="mt-1 text-xs text-red-600">{errors[field.id].message}</p>
+                  )}
+                </div>
+              ))}
+
+              {/* Dropdowns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="websiteType" className="block text-sm font-medium text-gray-700">
+                    Website Type
+                  </label>
+                  <select
+                    id="websiteType"
+                    {...register("websiteType")}
+                    className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
+                  >
+                    {["Business Website", "E-Commerce Store", "Portfolio/Personal", "Blog/Content", "Other"].map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">
+                    Number of Pages
+                  </label>
+                  <input
+                    id="pageCount"
+                    type="number"
+                    min="1"
+                    defaultValue="5"
+                    {...register("pageCount", { valueAsNumber: true })}
+                    className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
+                  />
+                </div>
               </div>
 
+              {/* Features Checkboxes */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email Address <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Features Needed
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  {...register("email", { 
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address"
-                    }
-                  })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone Number
-                </label>
-                <input
-                  id="phone"
-                  type="tel"
-                  {...register("phone")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
-                  Business/Brand Name
-                </label>
-                <input
-                  id="businessName"
-                  type="text"
-                  {...register("businessName")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="websiteType" className="block text-sm font-medium text-gray-700">
-                  Type of Website
-                </label>
-                <select
-                  id="websiteType"
-                  {...register("websiteType")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                >
-                  <option value="Business Website">Business Website</option>
-                  <option value="E-Commerce Store">E-Commerce Store</option>
-                  <option value="Portfolio/Personal Website">Portfolio/Personal Website</option>
-                  <option value="Blog/Content Site">Blog/Content Site</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="pageCount" className="block text-sm font-medium text-gray-700">
-                  Number of Pages
-                </label>
-                <input
-                  id="pageCount"
-                  type="number"
-                  min="1"
-                  defaultValue="5"
-                  {...register("pageCount", { valueAsNumber: true })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Features Required
-                </label>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {["Contact Form", "Online Store", "Blog Section", "Booking System", "Gallery", "Custom Design"].map((feature) => (
                     <div key={feature} className="flex items-center">
                       <input
@@ -258,9 +236,9 @@ export default function QuotationPage() {
                         type="checkbox"
                         value={feature}
                         {...register("features")}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-4 w-4 rounded border-gray-300 text-indigo-600"
                       />
-                      <label htmlFor={`feature-${feature}`} className="ml-2 block text-sm text-gray-700">
+                      <label htmlFor={`feature-${feature}`} className="ml-2 text-sm">
                         {feature}
                       </label>
                     </div>
@@ -268,140 +246,116 @@ export default function QuotationPage() {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="budgetRange" className="block text-sm font-medium text-gray-700">
-                  Budget Range
-                </label>
-                <select
-                  id="budgetRange"
-                  {...register("budgetRange")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                >
-                  <option value="₹3,000 - ₹5,000">₹3,000 - ₹5,000</option>
-                  <option value="₹5,000 - ₹10,000">₹5,000 - ₹10,000</option>
-                  <option value="₹10,000 - ₹20,000">₹10,000 - ₹20,000</option>
-                  <option value="₹20,000+">₹20,000+</option>
-                  <option value="Not Sure">Not Sure</option>
-                </select>
+              {/* Budget and Deadline */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="budgetRange" className="block text-sm font-medium text-gray-700">
+                    Budget Range
+                  </label>
+                  <select
+                    id="budgetRange"
+                    {...register("budgetRange")}
+                    className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
+                  >
+                    {["₹3,000 - ₹5,000", "₹5,000 - ₹10,000", "₹10,000 - ₹20,000", "₹20,000+", "Not Sure"].map((range) => (
+                      <option key={range} value={range}>{range}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
+                    Deadline
+                  </label>
+                  <input
+                    id="deadline"
+                    type="date"
+                    {...register("deadline")}
+                    className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
-                  Deadline
-                </label>
-                <input
-                  id="deadline"
-                  type="date"
-                  {...register("deadline")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
-                />
-              </div>
-
+              {/* Additional Details */}
               <div>
                 <label htmlFor="additionalDetails" className="block text-sm font-medium text-gray-700">
                   Additional Details
                 </label>
                 <textarea
                   id="additionalDetails"
-                  rows={4}
+                  rows={3}
                   {...register("additionalDetails")}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
+                  className="mt-1 w-full rounded border border-gray-300 p-2 text-sm"
                 />
               </div>
 
-              <div>
-                <button
-                  type="submit"
-                  className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Get My Quote
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                Get My Quote
+              </button>
             </form>
           </div>
 
-          <div className="bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Price Estimates</h2>
+          {/* Price Table Section */}
+          <div className="w-full lg:w-1/2 bg-white p-5 sm:p-6 rounded-lg shadow-sm">
+            <h2 className="text-lg font-semibold mb-3">Our Pricing</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white border border-gray-200">
-                <thead className="bg-gray-50">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price Range</th>
+                    <th className="p-2 text-left text-xs sm:text-sm">Service</th>
+                    <th className="p-2 text-left text-xs sm:text-sm">Price</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Basic Website (up to 5 pages)</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹3,000 – ₹5,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">E-Commerce Website</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹7,000 – ₹15,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Additional Page</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹500 / page</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Domain & Hosting</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹2,000 – ₹3,000 / year</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Contact Form</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹1,000 – ₹2,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Online Store</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹4,000 – ₹8,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Blog Section</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹2,000 – ₹4,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Booking System</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹3,000 – ₹6,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Gallery</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹1,500 – ₹3,000</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">Custom Design</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">₹2,000 – ₹5,000</td>
-                  </tr>
+                <tbody>
+                  {[
+                    { service: "Basic Website (5 pages)", price: "₹3,000 – ₹5,000" },
+                    { service: "E-Commerce Website", price: "₹7,000 – ₹15,000" },
+                    { service: "Extra Page", price: "₹500/page" },
+                    { service: "Contact Form", price: "₹1,000 – ₹2,000" },
+                    { service: "Online Store", price: "₹4,000 – ₹8,000" },
+                    { service: "Blog Section", price: "₹2,000 – ₹4,000" },
+                    { service: "Booking System", price: "₹3,000 – ₹6,000" },
+                    { service: "Photo Gallery", price: "₹1,500 – ₹3,000" },
+                    { service: "Custom Design", price: "₹2,000 – ₹5,000" },
+                    { service: "Domain & Hosting", price: "₹2,000 – ₹3,000/year" }
+                  ].map((item, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                      <td className="p-2 text-xs sm:text-sm">{item.service}</td>
+                      <td className="p-2 text-xs sm:text-sm">{item.price}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Dynamic Estimate Preview */}
-            {(websiteType || pageCount > 0 || (features && features.length > 0)) && (
-              <div className="mt-8">
-                <h3 className="text-lg font-medium mb-2">Your Estimated Cost</h3>
+            {/* Estimate Preview */}
+            {(websiteType || pageCount > 0 || features.length > 0) && (
+              <div className="mt-6 bg-gray-50 p-4 rounded">
+                <h3 className="text-md font-medium mb-2">Your Estimate Preview</h3>
                 <button 
                   onClick={handleSubmit(calculateEstimate)}
-                  className="mb-4 text-sm text-indigo-600 hover:text-indigo-800"
+                  className="mb-3 text-sm text-indigo-600 hover:text-indigo-800"
                 >
-                  Calculate Estimate
+                  Calculate Now
                 </button>
                 
                 {estimates.length > 0 && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <table className="min-w-full">
-                      <tbody className="divide-y divide-gray-200">
-                        {estimates.map((item, index) => (
-                          <tr key={index}>
-                            <td className="px-2 py-1 text-sm text-gray-900">{item.service}</td>
-                            <td className="px-2 py-1 text-sm text-gray-900">{item.price}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="mt-2 pt-2 border-t border-gray-200 text-right">
-                      <p className="text-sm font-semibold">Approximate Total: {totalEstimate}</p>
+                  <>
+                    <div className="max-h-40 overflow-y-auto">
+                      {estimates.map((item, index) => (
+                        <div key={index} className="flex justify-between py-1 border-b border-gray-200">
+                          <span className="text-sm">{item.service}</span>
+                          <span className="text-sm font-medium">{item.price}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                    <div className="mt-2 pt-2 border-t border-gray-300 text-right">
+                      <p className="text-sm font-semibold">Approx. Total: {totalEstimate}</p>
+                    </div>
+                  </>
                 )}
               </div>
             )}
